@@ -145,7 +145,9 @@ def hot_softmax(y, dim=0, temperature=1.0):
     """
     # TODO: Implement based on the above.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    if temperature == 0:
+        return 0
+    result = torch.softmax(y/temperature, dim=dim)
     # ========================
     return result
 
@@ -181,7 +183,19 @@ def generate_from_model(model, start_sequence, n_chars, char_maps, T):
     #  necessary for this. Best to disable tracking for speed.
     #  See torch.no_grad().
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    with torch.no_grad():
+        h = None
+        x = chars_to_onehot(start_sequence, char_to_idx).unsqueeze(dim=0)
+        char_count = len(start_sequence)
+        for _ in range(n_chars - char_count):
+            x = x.to(dtype=torch.float)
+            x = x.to(device)
+            y, h = model(x, h)
+            prob = hot_softmax(y[0,-1,:], temperature=T)
+            next_char_idx = torch.multinomial(prob, 1).item()
+            next_char = idx_to_char[next_char_idx]
+            x = chars_to_onehot(next_char, char_to_idx).unsqueeze(dim=0)
+            out_text += next_char 
     # ========================
 
     return out_text
@@ -267,7 +281,23 @@ class MultilayerGRU(nn.Module):
         #      then call self.register_parameter() on them. Also make
         #      sure to initialize them. See functions in torch.nn.init.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        for i in range(n_layers):
+            in_dim = in_dim if i==0 else h_dim
+            w_xz = nn.Linear(in_dim, h_dim, bias=True)
+            self.add_module(f'l{i}_xz', w_xz)
+            w_hz = nn.Linear(h_dim, h_dim, bias=False)
+            self.add_module(f'l{i}_hz', w_hz)
+            w_xr = nn.Linear(in_dim, h_dim, bias=True)
+            self.add_module(f'l{i}_xr', w_xr)
+            w_hr = nn.Linear(h_dim, h_dim, bias=False)
+            self.add_module(f'l{i}_hr', w_hr)
+            w_xg = nn.Linear(in_dim, h_dim, bias=True)
+            self.add_module(f'l{i}_xg', w_xg)
+            w_hg = nn.Linear(h_dim, h_dim, bias=False)
+            self.add_module(f'l{i}_hg', w_hg)
+            drop = nn.Dropout(p=dropout)
+            self.layer_params.append((w_xz, w_hz, w_xr, w_hr, w_xg, w_hg, drop))
+        self.y = nn.Linear(h_dim, out_dim, bias=True)
         # ========================
 
     def forward(self, input: Tensor, hidden_state: Tensor = None):
@@ -305,6 +335,20 @@ class MultilayerGRU(nn.Module):
         #  Tip: You can use torch.stack() to combine multiple tensors into a
         #  single tensor in a differentiable manner.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        layer_output_seq = []
+        for i in range(seq_len):
+            x = layer_input[:, i, :] 
+            #w=(xz,hz,xr,hr,xg,hg,drop)
+            for idx, (h, w) in enumerate(zip(layer_states, self.layer_params)):
+                z = torch.sigmoid(w[0](x) + w[1](h))
+                r = torch.sigmoid(w[2](x) + w[3](h))
+                g = torch.tanh(w[4](x) + w[5](r * h))
+                layer_states[idx] = z * h + (1 - z) * g
+                # if idx < 2:
+                #     print(f'layer {idx} state: {layer_states[idx]}  shape={layer_states[idx].shape}')
+                x = w[6](layer_states[idx])
+            layer_output_seq.append(self.y(layer_states[idx]))
+        layer_output = torch.stack(layer_output_seq, dim=1)
+        hidden_state = torch.stack(layer_states, dim=1)
         # ========================
         return layer_output, hidden_state
