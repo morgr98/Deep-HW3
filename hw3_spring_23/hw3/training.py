@@ -94,8 +94,25 @@ class Trainer(abc.ABC):
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
             
-            raise NotImplementedError()
+            train_result = self.train_epoch(dl_train, verbose = verbose, **kw)
+            train_loss.append((sum(train_result.losses)/len(train_result.losses)))
+            train_acc.append(train_result.accuracy)
+            test_result = self.test_epoch(dl_test, verbose = verbose, **kw)
+            test_loss.append((sum(test_result.losses)/len(test_result.losses)))
+            test_acc.append(test_result.accuracy)
 
+            actual_num_epochs+=1
+            if best_acc is None or test_result.accuracy > best_acc:
+                best_acc = test_result.accuracy
+                epochs_without_improvement = 0
+                if checkpoints:
+                    self_checkpoint = True
+
+            else:
+                epochs_without_improvement += 1
+                if early_stopping is not None and epochs_without_improvement >= early_stopping :
+                    print("early stopping")
+                    break
             # ========================
 
             # Save model checkpoint if requested
@@ -251,16 +268,16 @@ class RNNTrainer(Trainer):
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
         
-        pred, _ = self.model.forward(x, self.hidden_state)
-        
+        pred, self.hidden_state = self.model.forward(x, self.hidden_state)
+        pred_T = torch.transpose(pred, 1, 2)
         self.optimizer.zero_grad()
-        loss = self.loss_fn(pred, y)
+        loss = self.loss_fn(pred_T, y)
         loss.backward()
         
         self.optimizer.step()
         self.hidden_state = self.hidden_state.detach()
         
-        pred = torch.argmax(pred, dim=1)
+        pred = torch.argmax(pred_T, dim=1)
         num_correct = torch.sum(pred == y)
         
         # ========================
@@ -282,8 +299,11 @@ class RNNTrainer(Trainer):
             #  - Loss calculation
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            pred, hiden = self.model.forward(x, self.hidden_state)            
-            pred = torch.argmax(pred, dim=1)
+            pred, hiden = self.model.forward(x, self.hidden_state)     
+            pred_T = torch.transpose(pred, 1, 2)
+            loss = self.loss_fn(pred_T, y)
+            
+            pred = torch.argmax(pred_T, dim=1)
             num_correct = torch.sum(pred == y)
             # ========================
 
