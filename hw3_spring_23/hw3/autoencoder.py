@@ -19,7 +19,17 @@ class EncoderCNN(nn.Module):
         #  use pooling or only strides, use any activation functions,
         #  use BN or Dropout, etc.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        kernel_size = 5
+        modules.append(nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=kernel_size, stride=2, padding=2))
+        modules.append(nn.BatchNorm2d(num_features=64))
+        modules.append(nn.ReLU())
+        modules.append(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=kernel_size, stride=2, padding=2))
+        modules.append(nn.BatchNorm2d(num_features=128))
+        modules.append(nn.ReLU())
+        modules.append(nn.Conv2d(in_channels=128, out_channels=256, kernel_size=kernel_size, padding=2))
+        modules.append(nn.BatchNorm2d(num_features=256))
+        modules.append(nn.ReLU())
+        modules.append(nn.Conv2d(in_channels=256, out_channels=out_channels, kernel_size=kernel_size, padding=2))
         # ========================
         self.cnn = nn.Sequential(*modules)
 
@@ -42,7 +52,17 @@ class DecoderCNN(nn.Module):
         #  output should be a batch of images, with same dimensions as the
         #  inputs to the Encoder were.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        kernel_size = 5
+        modules.append(nn.ConvTranspose2d(in_channels=in_channels, out_channels=256, kernel_size=kernel_size, stride=2, padding=2, output_padding=1))
+        modules.append(nn.BatchNorm2d(num_features=256))
+        modules.append(nn.Tanh())
+        modules.append(nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=kernel_size, stride=2, padding=2, output_padding=1))
+        modules.append(nn.BatchNorm2d(num_features=128))
+        modules.append(nn.ReLU())
+        modules.append(nn.ConvTranspose2d(in_channels=128, out_channels=32, kernel_size=kernel_size, padding=2))
+        modules.append(nn.BatchNorm2d(num_features=32))
+        modules.append(nn.ReLU())
+        modules.append(nn.ConvTranspose2d(in_channels=32, out_channels=out_channels, kernel_size=kernel_size, padding=2))
         # ========================
         self.cnn = nn.Sequential(*modules)
 
@@ -70,7 +90,9 @@ class VAE(nn.Module):
 
         # TODO: Add more layers as needed for encode() and decode().
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.linear_mu = nn.Linear(n_features, self.z_dim)
+        self.linear_var = nn.Linear(n_features, self.z_dim)
+        self.linear_z = nn.Linear(self.z_dim, n_features)
         # ========================
 
     def _check_features(self, in_size):
@@ -91,7 +113,17 @@ class VAE(nn.Module):
         #     log_sigma2 (mean and log variance) of q(Z|x).
         #  2. Apply the reparametrization trick to obtain z.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        device = next(self.parameters()).device
+        h = self.features_encoder(x)
+        h = torch.reshape(h, (x.shape[0], -1))
+        mu = self.linear_mu(h)
+        log_sigma2 = self.linear_var(h)
+        r_trick = torch.normal(0, 1, mu.size(), device=mu.device)
+        #print(r_trick)
+        #print(mu)
+        #print(torch.sqrt(log_sigma2))
+        z = mu + r_trick * (torch.sqrt(torch.exp(log_sigma2)))
+        #print(z)
         # ========================
 
         return z, mu, log_sigma2
@@ -102,7 +134,9 @@ class VAE(nn.Module):
         #  1. Convert latent z to features h with a linear layer.
         #  2. Apply features decoder.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        h = self.linear_z(z)
+        h = h.view(-1, self.features_shape[0])
+        x_rec = self.features_decoder(h)
         # ========================
 
         # Scale to [-1, 1] (same dynamic range as original images).
