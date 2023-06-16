@@ -23,14 +23,14 @@ def part1_rnn_hyperparams():
     # TODO: Set the hyperparameters to train the model.
     # ====== YOUR CODE: ======
     hypers = dict(
-        batch_size=1024,
-        seq_len=64,
+        batch_size=512,
+        seq_len=80,
         h_dim=256,
         n_layers=3,
-        dropout=0.4,
+        dropout=0.05,
         learn_rate=0.001,
         lr_sched_factor=0.01,
-        lr_sched_patience=2,
+        lr_sched_patience=4,
     )
     # ========================
     return hypers
@@ -38,43 +38,42 @@ def part1_rnn_hyperparams():
 
 def part1_generation_params():
     start_seq = "What now, my son"
-    temperature = 0.0001
+    temperature = 0.00001
     # TODO: Tweak the parameters to generate a literary masterpiece.
     # ====== YOUR CODE: ======
-    
+
     # ========================
     return start_seq, temperature
 
 
 part1_q1 = r"""
     we split the corpus into sequences instead of training on the whole text because we can run the model on the text with paralize, as a result the model will run faster.
-    Morvoer, if we will use the whole text, the model will overfit on the train set.
+    Moreover, if we will use the whole text, the model will overfit on the train set.
 
 """
 
 part1_q2 = r"""
-    This is possible because while the model predict the next char, we use it as the next input of the model.
-    In this way, we can get an ouput in any size that we want.
+    This is possible because while the model predicts the next char, we use it as the next input of the model.
+    This way, we can get an output in any size we want.
 
 """
 
 part1_q3 = r"""
-    We dont shuffle the order of batches when training, because the meaning of the sequence of the input(that represent a text) is important to the model training.
+    We don't shuffle the order of batches when training because the meaning of the sequence of the input(that represents a text) is important to the model training.
     If we change and shuffle the order of batches, we will lose the meaning and context of the text, and the model will train no words text and  mistakes.  
 
 """
 
 part1_q4 = r"""
     1.
-    We lower the temperature for sampling because it help us to control the variance of distribution.
-    Higher variance leads to more unifrom distribution.
+    Lowering the temperature using softmax for sampling helps to make the output more deterministic. The softmax function, when applied with a lower temperature, amplifies the probabilities of high-scoring items and suppresses the probabilities of low-scoring items.
 
     2.
-    Higher temperature lead to samller variance, becasue y/t is close to zero for all the elements as a result the softmax distribution becomes closer to uniform distribution.
+    Very High temperature makes the softmax output become close to a uniform distribution, with nearly equal probabilities for all items. This high temperature leads to increased randomness and diversity in the generated output. the model may result in less coherent or meaningful output as the probabilities are evenly spread across different items.
     
 
     3.
-    Lower temperature leads to that the softmax distribution becomes more peaked, and the highest-valued elements dominate with higher probabilities.
+    Low temperature makes the softmax output become more peaked, with a single item dominating with a probability close to 1.0. In this case, the generated output becomes highly deterministic, relying on the most likely choices at each step. The low temperature constrains the model to generate sequences that closely match the training data, which leads to a lack of creativity and diversity, leading to repetitive or overly predictable sequences.
 
     
 
