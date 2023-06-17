@@ -94,7 +94,15 @@ def part2_vae_hyperparams():
     )
     # TODO: Tweak the hyperparameters to generate a former president.
     # ====== YOUR CODE: ======
-   
+    hypers = dict(
+        batch_size=64,
+        h_dim=256,
+        z_dim=64,
+        x_sigma2=0.01,
+        learn_rate=0.0001,
+        betas=(0.9, 0.999),
+    )
+        
     # ========================
     return hypers
 
@@ -102,18 +110,27 @@ def part2_vae_hyperparams():
 part2_q1 = r"""
 **Your answer:**
 
+The $\sigma^2$ is the variance of the normal distribution of the likelihood 
+$p _{\bb{\beta}}(\bb{X} | \bb{Z}=\bb{z}) = \mathcal{N}( \Psi _{\bb{\beta}}(\bb{z}) , \sigma^2 \bb{I} )$.
+
+When the variance is high the model is more flexible in the samples he generates, which can lead to less accuracy but more diversity.
+When the variance is low the model is less flexible and the samples he generates are closer to the samples he trained on, so the accuracy is higher but he get less diversity.
 
 """
 
 part2_q2 = r"""
 **Your answer:**
+1. The reconstruction loss is the difference between the original input and the reconstructed output, encouraging the VAE to generate samples close to the trained samples. The KL divergence loss regularizes the latent space by encouraging it to follow a prior distribution (usually a standard normal distribution).
 
+2. The KL loss term makes the latent space distribution to be closer to the normal standard distribution, this way we add regularization into the training model.
+
+3. The benefit of the KL loss term's effect is that it promotes a structured latent space, enabling meaningful interpolation and sampling of latent variables during generation. It encourages the VAE to learn a more disentangled representation of the data, where each dimension of the latent space captures a different aspect or feature, making it easier to manipulate and control the generated outputs.
 
 """
 
 part2_q3 = r"""
 **Your answer:**
-
+By maximizing P(X), we encourage the VAE to learn the underlying data distribution and generate realistic samples that capture the essential characteristics of the data. This step serves as a reconstruction objective and is essential for training the VAE to generate meaningful outputs.
 
 
 """
@@ -121,6 +138,7 @@ part2_q3 = r"""
 part2_q4 = r"""
 **Your answer:**
 
+By modeling the log of the latent-space variance, we ensure that the learned representations of the latent space remain unconstrained and can cover a wide range of values. Taking the logarithm transforms the variance from a positive range to the entire real number line, allowing for more flexibility in representation. Additionally, working with the logarithm helps to stabilize the optimization process, preventing numerical instability
 
 """
 
