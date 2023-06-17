@@ -122,7 +122,7 @@ class VAE(nn.Module):
         #print(r_trick)
         #print(mu)
         #print(torch.sqrt(log_sigma2))
-        z = mu + r_trick * (torch.sqrt(torch.exp(log_sigma2)))
+        z = mu + r_trick * torch.exp(log_sigma2 * 0.5)
         #print(z)
         # ========================
 
@@ -135,7 +135,7 @@ class VAE(nn.Module):
         #  2. Apply features decoder.
         # ====== YOUR CODE: ======
         h = self.linear_z(z)
-        h = h.view(-1, self.features_shape[0])
+        h = torch.reshape(h, (-1, *self.features_shape))
         x_rec = self.features_decoder(h)
         # ========================
 
@@ -188,7 +188,17 @@ def vae_loss(x, xr, z_mu, z_log_sigma2, x_sigma2):
     #  1. The covariance matrix of the posterior is diagonal.
     #  2. You need to average over the batch dimension.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    d_x = torch.numel(torch.FloatTensor(x.shape))
+    d_z = z_mu.shape[1]
+    data_loss = torch.pow(((x - xr).norm()), 2)
+    data_loss = data_loss / (d_x*x_sigma2)
+
+    tr_sigma = torch.sum(torch.exp(z_log_sigma2))
+    z_mu_norm_2  = torch.pow(torch.norm(z_mu), 2)
+    log_det = torch.sum(z_log_sigma2)
+    kldiv_loss = (tr_sigma + z_mu_norm_2 - log_det)/ x.shape[0] - d_z 
+    loss = data_loss + kldiv_loss
+    
     # ========================
 
     return loss, data_loss, kldiv_loss
