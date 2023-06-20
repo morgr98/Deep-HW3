@@ -33,7 +33,21 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     #    (both for tokens that aren't in the window, and for tokens that correspond to padding according to the 'padding mask').
     # Aside from these two rules, you are free to implement the function as you wish. 
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    num_heads = 1
+    disatnce_window = window_size // 2
+    if len(q.shape) == 4:
+        num_heads = q.shape[1]
+
+    indices_q = torch.arange(seq_len).unsqueeze(1)
+    indices_k = torch.arange(seq_len).unsqueeze(0)
+    d = torch.abs(indices_q - indices_k) <= disatnce_window
+    k_t = k.transpose(-2,-1)
+    d = d.unsqueeze(0).expand(batch_size, num_heads, d.shape[0], d.shape[0])
+    B = torch.where(d == 1, torch.matmul(q, k_t) / math.sqrt(embed_dim), torch.tensor(float('-inf')))
+    
+    attention = torch.softmax(B, dim=-1)
+    values = torch.matmul(attention, v)
+    
     # ========================
 
 
@@ -80,7 +94,7 @@ class MultiHeadAttention(nn.Module):
         # TODO:
         # call the sliding window attention function you implemented
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        values, attention = sliding_window_attention(q, k, v, window_size, padding_mask=padding_mask)
         # ========================
 
         values = values.permute(0, 2, 1, 3) # [Batch, SeqLen, Head, Dims]
