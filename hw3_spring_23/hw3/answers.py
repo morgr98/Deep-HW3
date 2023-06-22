@@ -172,12 +172,14 @@ def part3_transformer_encoder_hyperparams():
 
 part3_q1 = r"""
 **Your answer:**
-
+Every cell in the input tensor is affecting 'window_size' cells in the output of the window_sliding_attention, when we use 2 layers one on top of the other the cell i affect all the [i-window_size/2, i+window_size/2] cells on the first layer and on the second layer they affecting all the cells in 
+[i-2*(window_size/2), i+2*(window_size/2)].
+So, when we have d layers each cell is affecting all [i-d*(window_size/2), i+d*(window_size/2)], if we think about text learning the first word is the first cell in the input and it affects the d*(window_size/2) word, this way we can have a very large broader context.
 """
 
 part3_q2 = r"""
 **Your answer:**
-
+We can use the Global+sliding window, which means we do the same technique as the regular sliding window but we will also have a few global units that attend to all the other units. Let's say for example the first unit is global so we attend between all the other units so it affected and affects all the other units, this way we get more global context, and because we use only a few global values we are getting time complex of O(nw) + O(nK) = O(nw) when K is small constance.
 
 """
 
