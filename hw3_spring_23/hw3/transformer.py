@@ -442,27 +442,34 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     disatnce_window = window_size // 2
     if len(q.shape) == 4:
         num_heads = q.shape[1]
-
+    print(batch_size)
+    print(seq_len)
+    print(embed_dim)
+    print(num_heads)
     indices_q = torch.arange(seq_len).unsqueeze(1)
     indices_k = torch.arange(seq_len).unsqueeze(0)
     d = torch.abs(indices_q - indices_k) <= disatnce_window
     k_t = k.transpose(-2,-1)
     d = d.unsqueeze(0).expand(batch_size, num_heads, d.shape[0], d.shape[0])
-    B = torch.where(d == 1, torch.matmul(q, k_t) / math.sqrt(embed_dim), torch.tensor(float(-9e15)).float())#torch.tensor(float('-inf')))
+    B = torch.where(d == 1, torch.matmul(q, k_t) / math.sqrt(embed_dim), torch.tensor(float('-9e15')))
+    print(B.shape)
     if padding_mask is not None:
-        print("B=", B)
-        print("padding_mask")
-        print(padding_mask)
-        B = masked_fill_(mask = 0, value=-9e15)
-        print("B=", B)
-    
+        #print("B=", B)
+        #print("padding_mask")
+        mask_reshaped = padding_mask.unsqueeze(1).unsqueeze(-1)
+        #print(mask_reshaped)
+        multiplied_tensor = mask_reshaped * mask_reshaped.transpose(-1, -2)
+        #print(multiplied_tensor)
+        #print(multiplied_tensor.shape)
+        expanded_multiplied_tensor = multiplied_tensor.expand(-1, num_heads, -1, -1)
+        #print(expanded_multiplied_tensor)
+        B = torch.where(expanded_multiplied_tensor == 1, B, torch.tensor(float('-9e15')))
+        #print("B=", B)
+
     attention = torch.softmax(B, dim=-1)
     values = torch.matmul(attention, v)
-
     # ========================
-
-
-#     return values, attention
+    return values, attention
 
 
 
