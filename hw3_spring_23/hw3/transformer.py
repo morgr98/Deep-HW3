@@ -438,6 +438,8 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     #    (both for tokens that aren't in the window, and for tokens that correspond to padding according to the 'padding mask').
     # Aside from these two rules, you are free to implement the function as you wish. 
     # ====== YOUR CODE: ======
+    print("herhe")
+    print(q.shape)
     num_heads = 1
     disatnce_window = window_size // 2
     if len(q.shape) == 4:
@@ -504,6 +506,8 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x, padding_mask, return_attention=False):
         batch_size, seq_length, embed_dim = x.size()
+        print("there")
+        print(x.shape)
         qkv = self.qkv_proj(x)
         
         # Separate Q, K, V from linear output
@@ -656,12 +660,15 @@ class Encoder(nn.Module):
         #  5) Apply the classification MLP to the output vector corresponding to the special token [CLS] 
         #     (always the first token) to receive the logits.
         # ====== YOUR CODE: ======
+        #print(f'sen={sentence.shape}')
         x = self.encoder_embedding(sentence)
+        #print(f'x1={x.shape}')
         x = self.positional_encoding.forward(x)
+        #print(f'x2={x.shape}')
         x = self.dropout(x)
-        for encoder in self.encoder_layers:
-            x = encoder.forward(x, padding_mask)
-        output = self.classification_mlp(x)
+        #print(f'x3={x.shape}')
+        x = x[:, 0, :]
+        output = self.classification_mlp(x).squeeze(-1)  
         
         # ========================
         

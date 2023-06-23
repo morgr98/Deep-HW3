@@ -354,7 +354,19 @@ class TransformerEncoderTrainer(Trainer):
         # TODO:
         #  fill out the training loop.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        #print(f'size={input_ids.shape}')
+        #print(attention_mask.shape)
+        out = self.model.forward(input_ids, attention_mask)
+        self.optimizer.zero_grad()
+        #print(f'ou1t={out.shape}')
+        #print(label.shape)
+        loss = self.loss_fn(out, label)
+        loss.backward()
+        self.optimizer.step()
+        pred = torch.round(torch.sigmoid(out))
+        #print(label)
+        #print(pred)
+        num_correct = torch.sum(pred == label)
         # ========================
         
         
@@ -373,7 +385,11 @@ class TransformerEncoderTrainer(Trainer):
             # TODO:
             #  fill out the testing loop.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            out = self.model.forward(input_ids, attention_mask)
+            loss = self.loss_fn(out, label)
+            print("here")
+            pred = torch.round(torch.sigmoid(out))
+            num_correct = torch.sum(pred == label)
             # ========================
 
             
