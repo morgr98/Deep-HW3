@@ -174,7 +174,7 @@ def part3_transformer_encoder_hyperparams():
         num_layers = 0,
         hidden_dim = 0,
         window_size = 0,
-        droupout = 0.0,
+        dropout = 0.0,
         lr=0.0,
     )
 
@@ -184,10 +184,17 @@ def part3_transformer_encoder_hyperparams():
         embed_dim = 256, 
         num_heads = 4,
         num_layers = 3,
+<<<<<<< HEAD
         hidden_dim = 128,
         window_size = 32,
         droupout = 0.2,
         lr=0.0001,
+=======
+        hidden_dim = 64,
+        window_size = 16,
+        dropout = 0.1,
+        lr=0.0005,
+>>>>>>> b74f5731e0a6509dd348c5dc74be6ee592bd8833
     )
     # ========================
     return hypers
@@ -212,13 +219,16 @@ We can use the Global+sliding window, which means we do the same technique as th
 
 part4_q1 = r"""
 **Your answer:**
+By comparing the two different fine-tuning training we can see that the second approach when we are tuning all of the model parameters gets a better accuracy and lower loss, we are also seeing that after 1 epoch we get the best results on the test set and during the second epoch the accuracy of the test set is decreasing, but still gets better results than the approach of tuning only the last 2 layers.
+We can explain those results because when we are tuning all the parameters in the model, each learning step has more effect on the model towards the minimum loss therefore the model can fine-tune much faster. That is also the reason the second approach tent to overfit more, as we see in the second epoch (the training loss decreasing and the test loss increasing).
 
+This phenomenon is always happening because the phenomenon relies on the connection between faster learning leading to overfit.
 
 """
 
 part4_q2 = r"""
 **Your answer:**
-
+In language model the lower-level layers capture more general linguistic patterns and representations, while the higher-level layers learn task-specific features, that is why we think that freezing all the parameters except some low layers will not be able to fine-tune properly.
 
 """
 
