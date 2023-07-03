@@ -95,10 +95,13 @@ class Trainer(abc.ABC):
             # ====== YOUR CODE: ======
             
             train_result = self.train_epoch(dl_train, verbose = verbose, **kw)
-            train_loss.append((sum(train_result.losses)/len(train_result.losses)))
+            #train_loss.append((sum(train_result.losses)/len(train_result.losses)))
+            train_loss.extend(train_result.losses)
             train_acc.append(train_result.accuracy)
+            
             test_result = self.test_epoch(dl_test, verbose = verbose, **kw)
-            test_loss.append((sum(test_result.losses)/len(test_result.losses)))
+            #test_loss.append((sum(test_result.losses)/len(test_result.losses)))
+            test_loss.extend(test_result.losses)
             test_acc.append(test_result.accuracy)
 
             actual_num_epochs+=1
@@ -387,7 +390,6 @@ class TransformerEncoderTrainer(Trainer):
             # ====== YOUR CODE: ======
             out = self.model.forward(input_ids, attention_mask)
             loss = self.loss_fn(out, label)
-            print("here")
             pred = torch.round(torch.sigmoid(out))
             num_correct = torch.sum(pred == label)
             # ========================
@@ -403,8 +405,8 @@ class FineTuningTrainer(Trainer):
     def train_batch(self, batch) -> BatchResult:
         
         input_ids = batch["input_ids"].to(self.device)
-        attention_masks = batch["attention_mask"]
-        labels= batch["label"]
+        attention_masks = batch["attention_mask"].to(self.device)
+        labels= batch["label"].to(self.device)
         # TODO:
         #  fill out the training loop.
         # ====== YOUR CODE: ======
@@ -423,13 +425,13 @@ class FineTuningTrainer(Trainer):
         
         # ========================
         
-        return BatchResult(loss.item(), num_correct.item())
+        return BatchResult(loss.item(), num_correct)
         
     def test_batch(self, batch) -> BatchResult:
         
         input_ids = batch["input_ids"].to(self.device)
-        attention_masks = batch["attention_mask"]
-        labels= batch["label"]
+        attention_masks = batch["attention_mask"].to(self.device)
+        labels= batch["label"].to(self.device)
         
         with torch.no_grad():
             # TODO:
@@ -441,4 +443,4 @@ class FineTuningTrainer(Trainer):
             pred = torch.argmax(logits, dim=-1)
             num_correct = torch.sum(pred == labels)
             # ========================
-        return BatchResult(loss, num_correct)
+        return BatchResult(loss.item(), num_correct)
